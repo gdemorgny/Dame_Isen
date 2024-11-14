@@ -20,24 +20,10 @@ void ADameBoard::IntializeBoard()
 
 }
 
-bool ADameBoard::IsFree(int32 cellNumber)
-{
-	return DameGameState.BoardCells[cellNumber] == ECellState::Empty;
-}
 
 bool ADameBoard::IsOtherPlayerInCell(int32 cellNumber)
 {
-	bool result;
-	//TODO : Attention au changement de joueur !
-	if(DameGameState.ActivePlayer == -1)
-	{
-		result = DameGameState.BoardCells[cellNumber] == ECellState::WhitePawn || DameGameState.BoardCells[cellNumber] == ECellState::WhiteQueen;
-	} else
-	{
-		result = DameGameState.BoardCells[cellNumber] == ECellState::BlackPawn || DameGameState.BoardCells[cellNumber] == ECellState::BlackQueen;
-	}
-	
-	return result;
+	return DameGM->GetPlayerIdByPawnId(DameGM->GetPawnIdByCellNumber(cellNumber)) != DameGM->GetActualPlayer();
 }
 
 bool ADameBoard::IsInNextLine(int32 cellNumber, int32 lineNUmber)
@@ -51,7 +37,7 @@ TArray<FMovementSequence> ADameBoard::CheckMoves(int32 cellStart,int32 playerId,
 {
 	TArray<FMovementSequence> validMoves;// On garde en mémoire les séquences pour déterminer les pions à prendre et proposer les endroits où on peut aller
 	// Vérifier si le pion est une dame
-    ADamePion* SelectedPion = Cells[cellStart]->PawnInCell;
+    ADamePion* SelectedPion = DameGM->GetPawnByCellNumber(cellStart);
     if (SelectedPion && SelectedPion->IsQueen)
     {
     	FMovementSequence sequence;
@@ -90,7 +76,7 @@ TArray<FMovementSequence> ADameBoard::CheckPawnMove(int32 cellStart, int32 playe
 				{
 					break;
 				}
-				if(IsFree(jumpCell) && IsInNextLine(jumpCell, cellToTest/8+playerId))
+				if(DameGM->IsCellEmpty(jumpCell) && IsInNextLine(jumpCell, cellToTest/8+playerId))
 				{
 					alreadyEat = true;
 
@@ -141,7 +127,7 @@ TArray<FMovementSequence> ADameBoard::CheckPawnMove(int32 cellStart, int32 playe
 						}
 					}
 				}
-			}else if(!alreadyEat && IsFree(cellToTest))
+			}else if(!alreadyEat && DameGM->IsCellEmpty(cellToTest))
 			{
 				if (maxCaptures == 0)
 				{
@@ -183,7 +169,7 @@ TArray<FMovementSequence> ADameBoard::CheckDameMove(int32 cellStart, int32 playe
 				{
 					break;
 				}
-	            if (!alreadyEat && IsFree(TargetCell))
+	            if (!alreadyEat && DameGM->IsCellEmpty(TargetCell))
 	            {
 	                if (!CaptureHappened)  // Ajouter des mouvements jusqu'à ce qu'une capture soit faite
 	                {
@@ -204,7 +190,7 @@ TArray<FMovementSequence> ADameBoard::CheckDameMove(int32 cellStart, int32 playe
 	                	{
 	                		break;
 	                	}
-	                    if (IsFree(AfterCaptureCell))
+	                    if (DameGM->IsCellEmpty(AfterCaptureCell))
 	                    {
 	                        Sequence.Cells.Add(TargetCell);  // Case capturée
 	                        Sequence.Cells.Add(AfterCaptureCell);  // Case après capture
@@ -261,7 +247,7 @@ TArray<FMovementSequence> ADameBoard::CheckDameMove(int32 cellStart, int32 playe
 
 void ADameBoard::CellHighlight(int32 cellNumber,bool IsHighLighting)
 {
-	Cells[cellNumber]->ChangeMaterial(IsHighLighting);
+	DameGM->GetCellByCellId(cellNumber)->ChangeMaterial(IsHighLighting);
 }
 
 void ADameBoard::NewPawnSelect(ADamePion* newPawn)
@@ -273,7 +259,7 @@ void ADameBoard::NewPawnSelect(ADamePion* newPawn)
 			PawnSelected->Unselect();
 		}
 		PawnSelected = newPawn;
-		CellValidMoves = CheckMoves(PawnSelected->CellNumber,PawnSelected->PlayerId);
+		CellValidMoves = CheckMoves(DameGM->GetCellIdByPawnId(PawnSelected->PawnId),DameGM->GetPlayerIdByPawnId(PawnSelected->PawnId));
 		if(CellValidMoves.Num() >0 && CellValidMoves[0].Cells.Num()/2 >= DameGM->CaptureMandatoryNumber)
 		{
 			UE_LOG(LogTemp,Warning,TEXT("Pawn selected can capture %d need %d"),CellValidMoves[0].Cells.Num()/2,DameGM->CaptureMandatoryNumber);
@@ -306,20 +292,20 @@ void ADameBoard::NewCellSelect(class ADameCase* newCell)
 	for(int i = 0; i < CellValidMoves.Num(); i++)
 	{
 		CellHighlight(CellValidMoves[i].Cells.Last());
-		if(Cells[CellValidMoves[i].Cells.Last()] == newCell)
+		if(DameGM->GetCellByCellId(CellValidMoves[i].Cells.Last()) == newCell)
 		{
 			TArray<FVector> CellsPos;
 			TArray<ADamePion*> OpponentPawns;
 			if (CellValidMoves[i].Cells.Num() == 1)
 			{
-				CellsPos.Add(Cells[CellValidMoves[i].Cells[0]]->GetActorLocation());
+				CellsPos.Add(DameGM->GetCellByCellId(CellValidMoves[i].Cells[0])->GetActorLocation());
 			}else
 			{
 				for(int j = 0; j < CellValidMoves[i].Cells.Num(); j++)
 				{
 					if (j%2 == 1)
 					{
-						FVector NewCellPos =Cells[CellValidMoves[i].Cells[j]]->GetActorLocation() ;
+						FVector NewCellPos =DameGM->GetCellByCellId(CellValidMoves[i].Cells[j])->GetActorLocation() ;
 						if (PawnSelected->IsQueen)
 						{
 							NewCellPos.Z += 50;
@@ -327,49 +313,19 @@ void ADameBoard::NewCellSelect(class ADameCase* newCell)
 						CellsPos.Add(NewCellPos);
 					} else if (j%2 == 0)
 					{
-						OpponentPawns.Add(Cells[CellValidMoves[i].Cells[j]]->PawnInCell);
-						FString newPawnName = Cells[CellValidMoves[i].Cells[j]]->PawnInCell->GetName();
-						UE_LOG(LogTemp,Warning,TEXT("Add new pawn : %s"),*newPawnName)
+						OpponentPawns.Add(DameGM->GetPawnByCellNumber(CellValidMoves[i].Cells[j]));
 					}
 				}
 			}
-			
-			UpdatePlayerValueInCell(PawnSelected->CellNumber);
-			Cells[PawnSelected->CellNumber]->PawnInCell = nullptr;
-			PawnSelected->CellNumber = CellValidMoves[i].Cells.Last();
-			Cells[PawnSelected->CellNumber]->PawnInCell = PawnSelected;
-			UpdatePlayerValueInCell(PawnSelected->CellNumber,PawnSelected->PlayerId);
+			DameGM->SetNewLink(PawnSelected->PawnId,CellValidMoves[i].Cells.Last());
 			PawnSelected->StartMoveSequence(CellsPos,OpponentPawns);
 		}
 	}
 }
 
-void ADameBoard::UpdatePlayerValueInCell(int32 CellNumber, int32 PlayerId)
-{
-	RowCell[CellNumber/8].Column[CellNumber%8] = PlayerId;
-}
 
-FDameGameState ADameBoard::GetCurrentGameState()
-{
-	FDameGameState TempGameState;
-	for (int32 i = 0; i < Cells.Num(); i++)
-	{
-		if (Cells[i]->PawnInCell == nullptr)
-		{
-			TempGameState.BoardCells[i] = ECellState::Empty;
-		}
-		else if (Cells[i]->PawnInCell->PlayerId == 1)
-		{
-			TempGameState.BoardCells[i] = Cells[i]->PawnInCell->IsQueen ? ECellState::WhiteQueen : ECellState::WhitePawn;
-		}
-		else
-		{
-			TempGameState.BoardCells[i] = Cells[i]->PawnInCell->IsQueen ? ECellState::BlackQueen : ECellState::BlackPawn;
-		}
-	}
-	TempGameState.ActivePlayer = DameGM->ActualPlayer;
-	return TempGameState;
-}
+
+
 
 
 // Called when the game starts or when spawned

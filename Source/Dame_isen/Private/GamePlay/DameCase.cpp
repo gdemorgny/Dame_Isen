@@ -25,16 +25,23 @@ void ADameCase::Tick(float DeltaTime)
 
 }
 
-void ADameCase::ChangeMaterial(bool isHightlightActive)
+void ADameCase::ChangeMaterial(bool isHightlightActive = false)
 {
-	
-	isHightlightActive?StaticMesh->SetMaterial(0,HighlightMaterial):StaticMesh->SetMaterial(0,BaseMaterial);
+	if(isHightlightActive)
+	{
+		StaticMesh->SetMaterial(0,HighlightMaterial);
+	} else
+	{
+		if(CellColorType)
+		{
+			StaticMesh->SetMaterial(0,WhiteBaseMaterial);
+		} else
+		{
+			StaticMesh->SetMaterial(0,BlackBaseMaterial);
+		}
+	}
 }
 
-void ADameCase::SetBaseMat()
-{
-	BaseMaterial = StaticMesh->GetMaterial(0);
-}
 
 void ADameCase::Select()
 {

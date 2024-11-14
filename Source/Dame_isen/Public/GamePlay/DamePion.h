@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Global/ISelectable.h"
 #include "DameBoard.h"
+#include "Global/DameGameMode.h"
 #include "DamePion.generated.h"
 
 UCLASS()
@@ -17,21 +18,20 @@ public:
 	// Sets default values for this actor's properties
 	ADamePion();
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int32 CellNumber;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PlayerId;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CaptureMaxAllowed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool IsQueen;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ADameGameMode* DameGM;
 	//TODO : Acces au board
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	ADameBoard* Board;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool PawnColorType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 PawnId;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* StaticMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

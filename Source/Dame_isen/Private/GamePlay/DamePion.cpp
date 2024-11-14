@@ -18,32 +18,19 @@ ADamePion::ADamePion()
 void ADamePion::Die()
 {
 	UE_LOG(LogTemp,Warning,TEXT("Try Removing Pawn"))
-	for(int i =0;i<Board->DameGM->PlayerPawns[(PlayerId == 1)?0:1].Pawns.Num();i++)
-	{
-		if(Board->DameGM->PlayerPawns[(PlayerId == 1)?0:1].Pawns[i] == this)
-		{
-			Board->DameGM->PlayerPawns[(PlayerId == 1)?0:1].Pawns.RemoveAt(i);
-			UE_LOG(LogTemp,Warning,TEXT("Remove Pawn number %d"),i)
-			break;
-		}
-	}
-	Board->Cells[CellNumber]->PawnInCell = nullptr;
-	Board->UpdatePlayerValueInCell(CellNumber);
+	DameGM->RemovePawnByPawnId(PawnId);
 	Destroy();
 }
 
 void ADamePion::BecameAQueen()
 {
-	if(Board->DameGameState.ActivePlayer == PlayerId)
+	if(false) //TODO : Refaire la reine 
 	{
-		if((PlayerId	==1 && CellNumber >= 56)|| (PlayerId	== -1 && CellNumber < 8 ))
-		{
-			IsQueen = true;
-			FVector newLoc = GetActorLocation();
-			newLoc.Z +=50.f;
-			SetActorLocation(newLoc);
-		} 
-	}
+		IsQueen = true;
+		FVector newLoc = GetActorLocation();
+		newLoc.Z +=50.f;
+		SetActorLocation(newLoc);
+	} 
 }
 
 // Called when the game starts or when spawned
@@ -55,7 +42,7 @@ void ADamePion::BeginPlay()
 
 void ADamePion::Select()
 {
-	if(Board->DameGM->ActualPlayer == PlayerId)
+	if(DameGM->IsPawnControlledByActualPlayer(PawnId))
 	{
 		ChangeMaterial(true);
 		//TODO : Informer le board qu'un pion est sélectionné et qu'il doit déterminer les chemins possibles.
@@ -137,7 +124,7 @@ void ADamePion::OnMoveCompleted()
 		// Séquence terminée
 		GetWorldTimerManager().ClearTimer(MovementTimer);
 		ChangeMaterial(false);
-		Board->DameGM->ChangePlayer();
+		DameGM->ChangePlayer();
 	}
 }
 
@@ -158,7 +145,7 @@ void ADamePion::ChangeMaterial(bool isHightlightActive = false)
 	if(isHightlightActive)
 	{
 		StaticMesh->SetMaterial(0,HighlightMaterial);
-	} else if(PlayerId == 1)
+	} else if(PawnColorType)
 	{
 		StaticMesh->SetMaterial(0,FirstPlayerMaterial);
 	} else

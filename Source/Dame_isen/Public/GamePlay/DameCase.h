@@ -17,11 +17,15 @@ public:
 	// Sets default values for this actor's properties
 	ADameCase();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class ADamePion* PawnInCell;
+	int32 CellId;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool CellColorType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* StaticMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMaterialInterface* BaseMaterial;
+	UMaterialInterface* WhiteBaseMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInterface* BlackBaseMaterial;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMaterialInterface* HighlightMaterial;
 	//TODO : Acces au board
@@ -36,9 +40,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeMaterial(bool isHightlightActive = false);
-	UFUNCTION(BlueprintCallable)
-	void SetBaseMat();
+	void ChangeMaterial(bool isHightlightActive);
+	
 	virtual void Select() override;
 	virtual void Unselect() override;
 };

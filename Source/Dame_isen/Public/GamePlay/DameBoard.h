@@ -20,26 +20,7 @@ enum class ECellState : uint8
 };
 
 // Structure pour représenter un état de jeu simplifié
-USTRUCT(BlueprintType)
-struct FDameGameState
-{
-	GENERATED_BODY()
 
-	// Représentation du plateau (8x8 dans la plupart des variantes)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<ECellState> BoardCells;
-
-	// Joueur actif (0 = joueur humain, 1 = IA)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ActivePlayer;
-
-	// Initialisation de l'état du jeu
-	FDameGameState()
-	{
-		BoardCells.SetNum(64);  // 8x8 = 64 cases
-		ActivePlayer = 0;       // Commence avec le joueur humain
-	}
-};
 
 USTRUCT(BlueprintType)
 struct FColumnCell {
@@ -66,22 +47,9 @@ public:
 	// Sets default values for this actor's properties
 	ADameBoard();
 	
-	//Tableau de tableau de case (entier, 0 vide, 1 joueur 0, -1 joueur 1)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FColumnCell> RowCell;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDameGameState DameGameState;
-	
-	//Liste de case
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<class ADameCase*> Cells;
-
 	//Game mode
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ADameGameMode* DameGM;
-
-	
 	
 	//Variable suivi de pion sélectionné
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -97,9 +65,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	UFUNCTION()
-	bool IsFree(int32 cellNumber);
-	
+		
 	UFUNCTION()
 	bool IsOtherPlayerInCell(int32 cellNumber);
 	UFUNCTION()
@@ -128,11 +94,6 @@ public:
 	UFUNCTION()
 	void NewCellSelect(class ADameCase* newCell);
 
-	UFUNCTION()
-	void UpdatePlayerValueInCell(int32 CellNumber,int32 PlayerId = 0);
-
-	UFUNCTION()
-	FDameGameState GetCurrentGameState();
 	
 
 };
